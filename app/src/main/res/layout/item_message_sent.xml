@@ -2,40 +2,49 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:gravity="end"
-    android:padding="8dp">
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp">
 
-    <TextView
-        android:id="@+id/tvMessage"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_message_sent"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:maxWidth="250dp"
         android:padding="10dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="8dp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvTimestamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#B3C7F9"
-        android:textSize="12sp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="end" />
+        <TextView
+            android:id="@+id/tvMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:lineSpacingExtra="2dp"
+            android:maxWidth="260dp"
+            android:text="Hey, this is your message bubble!" />
 
-    <TextView
-        android:id="@+id/tvReadReceipt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="✓"
-        android:textColor="#757575"
-        android:textSize="12sp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="end" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical">
+
+            <TextView
+                android:id="@+id/tvTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#E0E0E0"
+                android:textSize="10sp"
+                android:text="10:45 PM" />
+
+            <TextView
+                android:id="@+id/tvReadReceipt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#E0E0E0"
+                android:textSize="10sp"
+                android:text="✓✓" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

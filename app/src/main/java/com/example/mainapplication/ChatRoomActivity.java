@@ -10,23 +10,26 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.android.material.appbar.MaterialToolbar;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
-public class ChatRoomActivity extends AppCompatActivity {
+public class ChatRoomActivity extends BaseActivity {
 
     private TextView tvChatWith, tvTypingStatus;
     private RecyclerView rvMessages;
@@ -59,15 +62,20 @@ public class ChatRoomActivity extends AppCompatActivity {
         com.google.firebase.FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_chat_room);
 
+        // Toolbar setup
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Chat"); // temporary title, updated below
+
         tvChatWith = findViewById(R.id.tvChatWith);
         tvTypingStatus = findViewById(R.id.tvTypingStatus);
         rvMessages = findViewById(R.id.rvMessages);
         etMessageInput = findViewById(R.id.etMessageInput);
-        btnSend = findViewById(R.id.btnSend);
+        ImageButton btnSend = findViewById(R.id.btnSend);
 
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
-
 
         receiverId = getIntent().getStringExtra("userId");
         receiverName = getIntent().getStringExtra("username");
@@ -80,17 +88,22 @@ public class ChatRoomActivity extends AppCompatActivity {
         }
 
         chatId = getChatId(senderId, receiverId);
+        getSupportActionBar().setTitle(receiverName != null ? receiverName : "Chat with user");
 
         tvChatWith.setText("Chat with " + receiverName);
 
+        // Listen for online/last active updates
         DocumentReference userRef = db.collection("users").document(receiverId);
         userRef.addSnapshotListener((snapshot, e) -> {
             if (e != null || snapshot == null) return;
 
+            String typingTo = snapshot.getString("typingTo");
             Boolean isOnline = snapshot.getBoolean("online");
             Long lastActive = snapshot.getLong("lastActive");
 
-            if (isOnline != null && isOnline) {
+            if (typingTo != null && typingTo.equals(senderId)){
+                tvTypingStatus.setText("Typing...");
+            }else if (isOnline != null && isOnline) {
                 tvTypingStatus.setText("Online");
             } else if (lastActive != null) {
                 tvTypingStatus.setText("Last seen " + getTimeAgo(lastActive));
@@ -99,9 +112,6 @@ public class ChatRoomActivity extends AppCompatActivity {
             }
         });
 
-        tvTypingStatus.setText("");
-
-        // RecyclerView setup
         messageList = new ArrayList<>();
         adapter = new MessageAdapter(messageList);
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
@@ -114,6 +124,16 @@ public class ChatRoomActivity extends AppCompatActivity {
         listenForTypingStatus();
         handleTypingIndicator();
         btnSend.setOnClickListener(v -> sendMessage());
+    }
+
+    /** Handle the Up (←) arrow click */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // return to ChatListActivity
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /** Real-time Firestore listener for messages */
@@ -129,10 +149,8 @@ public class ChatRoomActivity extends AppCompatActivity {
                     if (value != null) {
                         for (DocumentChange dc : value.getDocumentChanges()) {
                             if (dc.getType() == DocumentChange.Type.ADDED) {
-                                Message msg= dc.getDocument().toObject(Message.class);
-
+                                Message msg = dc.getDocument().toObject(Message.class);
                                 msg.setId(dc.getDocument().getId());
-
                                 messageList.add(msg);
 
                                 if (!msg.getSenderId().equals(senderId) && !msg.isSeen()) {
@@ -176,8 +194,8 @@ public class ChatRoomActivity extends AppCompatActivity {
     /** Updates typingTo field while user types */
     private void handleTypingIndicator() {
         etMessageInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override public void afterTextChanged(Editable s) { }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -206,8 +224,6 @@ public class ChatRoomActivity extends AppCompatActivity {
             String typingTo = snapshot.getString("typingTo");
             if (typingTo != null && typingTo.equals(senderId)) {
                 tvTypingStatus.setText("Typing...");
-            } else {
-                tvTypingStatus.setText("");
             }
         });
     }
@@ -219,7 +235,6 @@ public class ChatRoomActivity extends AppCompatActivity {
         typingHandler.removeCallbacks(clearTypingRunnable);
         if (currentUserRef != null) currentUserRef.update("typingTo", "");
     }
-
 
     private String getChatId(String sender, String receiver) {
         return sender.compareTo(receiver) < 0

@@ -16,10 +16,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MainApplication">
 
-        <activity android:name=".ChatListActivity" />
-
-        <activity android:name=".ChatRoomActivity" />
-
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -29,7 +25,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ChatListActivity" />
 
-        <activity android:name=".SignupActivity" />
+        <activity android:name=".ChatRoomActivity"
+                  android:parentActivityName=".ChatListActivity"/>
+
+        <activity android:name=".SignupActivity"
+            android:parentActivityName=".LoginActivity"/>
     </application>
 </manifest>

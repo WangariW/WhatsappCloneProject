@@ -10,14 +10,21 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+
+
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 
-public class ChatListActivity extends AppCompatActivity {
+public class ChatListActivity extends BaseActivity {
 
     private RecyclerView rvChatList;
     private FirebaseFirestore db;
@@ -32,6 +39,15 @@ public class ChatListActivity extends AppCompatActivity {
         com.google.firebase.FirebaseApp.initializeApp(this);
 
         setContentView(R.layout.activity_chat_list);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_logout) {
+                performLogout();
+                return true;
+            }
+            return false;
+        });
 
         rvChatList = findViewById(R.id.rvChatList);
         db = FirebaseFirestore.getInstance();
@@ -71,12 +87,39 @@ public class ChatListActivity extends AppCompatActivity {
                             User user = doc.toObject(User.class);
                             if (user != null && user.getUid() != null && !user.getUid().equals(currentUserId)) {
                                 userList.add(user);
+                                fetchLastMessage(user);
                             }
                         }
                     }
 
                     userAdapter.notifyDataSetChanged();
                 });
+    }
+
+    private void fetchLastMessage(User user) {
+        String chatId = getChatId(auth.getCurrentUser().getUid(), user.getUid());
+
+        db.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null || value == null || value.isEmpty()) return;
+
+                    Message lastMsg = value.getDocuments().get(0).toObject(Message.class);
+                    if (lastMsg != null) {
+                        user.setLastMessage(lastMsg.getMessage());
+                        user.setLastMessageTime(lastMsg.getTimestamp());
+                        userAdapter.notifyDataSetChanged();
+                    }
+                });
+    }
+
+    private String getChatId(String sender, String receiver) {
+        return sender.compareTo(receiver) < 0
+                ? sender + "_" + receiver
+                : receiver + "_" + sender;
     }
 
     private void openChatRoom(User user) {
@@ -99,6 +142,34 @@ public class ChatListActivity extends AppCompatActivity {
                     .addOnFailureListener(e ->
                             System.out.println("Presence update failed: " + e.getMessage()));
         }
+    }
+
+    private void performLogout() {
+        // mark offline (best-effort)
+        if (auth.getCurrentUser() != null) {
+            db.collection("users")
+                    .document(auth.getCurrentUser().getUid())
+                    .update("online", false, "lastActive", System.currentTimeMillis());
+        }
+
+        // Firebase sign out
+        FirebaseAuth.getInstance().signOut();
+
+        // Google sign out (safe if not used)
+        GoogleSignInClient gsc = GoogleSignIn.getClient(
+                this,
+                new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build()
+        );
+        gsc.signOut();
+
+        // Go back to login page
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="colorPrimary">#075E54</color>
-    <color name="colorPrimaryDark">#064C46</color>
-    <color name="colorAccent">#25D366</color>
-    <color name="chatBubbleSent">#DCF8C6</color>
-    <color name="chatBubbleReceived">#FFFFFF</color>
-    <color name="chatBackground">#ECE5DD</color>
+
+    <color name="colorPrimaryVariant">#3700B3</color>
+    <color name="colorPrimary">#1E2A78</color> <!-- Royal Navy -->
+    <color name="colorPrimaryDark">#131B54</color>
+    <color name="colorAccent">#F0C343</color> <!-- Gold Accent -->
+    <color name="colorSecondary">#E9E7FF</color>
+
+    <color name="colorBackground">#F7F8FA</color> <!-- Clean neutral -->
+    <color name="colorSurface">#FFFFFF</color>
+
+    <color name="colorTextPrimary">#1B1B1B</color>
+    <color name="colorTextSecondary">#6F6F6F</color>
+    <color name="colorHint">#9E9E9E</color>
+
+    <color name="green">#4CAF50</color>
+    <color name="gray">#9E9E9E</color>
+
+
+    <color name="chatBackground">#F2F3F7</color>
+    <color name="messageReceived">#E9E7FF</color> <!-- matches colorSecondary -->
+    <color name="messageSent">#1E2A78</color> <!-- matches colorPrimary -->
+
+
 </resources>

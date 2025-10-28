@@ -1,127 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D9D3D3"
+    android:orientation="vertical"
+    android:background="@color/colorBackground"
     tools:context=".SignupActivity">
 
-    <!-- App Title -->
-    <TextView
-        android:id="@+id/tvSignupTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="96dp"
-        android:fontFamily="cursive"
-        android:text="BanterBox"
-        android:textAlignment="center"
-        android:textColor="#3D647C"
-        android:textSize="55sp"
-        android:textStyle="bold|italic"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- ✅ Toolbar added -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="Create Account"
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/ic_arrow_back_24"
+        app:navigationContentDescription="Back" />
 
-    <!-- Sign-up Header -->
-    <TextView
-        android:id="@+id/tvSignupHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Sign Up"
-        android:textColor="@android:color/white"
-        android:textSize="34sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/tvSignupTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- Existing content scrollable -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-    <!-- Username -->
-    <EditText
-        android:id="@+id/etUsernameSignup"
-        android:layout_width="267dp"
-        android:layout_height="51dp"
-        android:layout_marginTop="20dp"
-        android:hint="Enter username"
-        android:inputType="textPersonName"
-        app:layout_constraintTop_toBottomOf="@id/tvSignupHeader"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
 
-    <!-- Email -->
-    <EditText
-        android:id="@+id/etEmailSignup"
-        android:layout_width="267dp"
-        android:layout_height="51dp"
-        android:layout_marginTop="16dp"
-        android:hint="Enter email"
-        android:inputType="textEmailAddress"
-        app:layout_constraintTop_toBottomOf="@id/etUsernameSignup"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tvSignupTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create Account"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="@color/colorPrimary"
+                android:layout_marginBottom="20dp" />
 
-    <!-- Password -->
-    <EditText
-        android:id="@+id/etPasswordSignup"
-        android:layout_width="267dp"
-        android:layout_height="51dp"
-        android:layout_marginTop="8dp"
-        android:hint="Enter password"
-        android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@id/etEmailSignup"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Profile image -->
+            <ImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:src="@drawable/ic_person"
+                android:background="@drawable/circle_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp" />
 
-    <!-- Profile picture -->
-    <ImageView
-        android:id="@+id/imgProfile"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bg_profile_circle"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_person"
-        app:layout_constraintTop_toBottomOf="@id/etPasswordSignup"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <Button
+                android:id="@+id/btnUploadPic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Upload Photo"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/colorAccent"
+                android:layout_marginBottom="24dp" />
 
-    <!-- Upload button -->
-    <Button
-        android:id="@+id/btnUploadPic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Upload Photo"
-        app:layout_constraintTop_toBottomOf="@id/imgProfile"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Username -->
+            <EditText
+                android:id="@+id/etUsernameSignup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Username"
+                android:background="@drawable/rounded_input_bg"
+                android:padding="14dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextSecondary"
+                android:layout_marginBottom="16dp" />
 
-    <!-- Terms checkbox -->
-    <CheckBox
-        android:id="@+id/checkBox"
-        android:layout_width="257dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:text="I agree to the Terms and Conditions"
-        android:textColor="#3C509E"
-        app:layout_constraintTop_toBottomOf="@id/btnUploadPic"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Email -->
+            <EditText
+                android:id="@+id/etEmailSignup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/rounded_input_bg"
+                android:padding="14dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextSecondary"
+                android:layout_marginBottom="16dp" />
 
-    <!-- Signup button -->
-    <Button
-        android:id="@+id/btSignup"
-        android:layout_width="262dp"
-        android:layout_height="54dp"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#566EF2"
-        android:text="Sign Up"
-        android:textColor="@android:color/white"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/checkBox"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Password -->
+            <EditText
+                android:id="@+id/etPasswordSignup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:background="@drawable/rounded_input_bg"
+                android:padding="14dp"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextSecondary"
+                android:layout_marginBottom="12dp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Terms & conditions -->
+            <CheckBox
+                android:id="@+id/checkBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="I agree to the Terms and Conditions"
+                android:textColor="@color/colorTextSecondary"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Signup button -->
+            <Button
+                android:id="@+id/btSignup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sign Up"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:backgroundTint="@color/colorPrimary"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Back to login -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Already have an account?"
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvBackToLogin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" Log In"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
