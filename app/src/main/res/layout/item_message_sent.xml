@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="end"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tvMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_message_sent"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:maxWidth="250dp"
+        android:padding="10dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="8dp" />
+
+    <TextView
+        android:id="@+id/tvTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#B3C7F9"
+        android:textSize="12sp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="end" />
+
+    <TextView
+        android:id="@+id/tvReadReceipt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✓"
+        android:textColor="#757575"
+        android:textSize="12sp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="end" />
+</LinearLayout>

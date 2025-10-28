@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorPrimary">#075E54</color>
+    <color name="colorPrimaryDark">#064C46</color>
+    <color name="colorAccent">#25D366</color>
+    <color name="chatBubbleSent">#DCF8C6</color>
+    <color name="chatBubbleReceived">#FFFFFF</color>
+    <color name="chatBackground">#ECE5DD</color>
+</resources>
