@@ -13,8 +13,8 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +23,8 @@ import java.util.Objects;
 public class SignupActivity extends BaseActivity {
 
     private EditText etUsernameSignup, etEmailSignup, etPasswordSignup;
-    private Button btSignup;
+    private Button btSignup, btBackToLogin;
     private CheckBox checkBox;
-
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -35,7 +34,6 @@ public class SignupActivity extends BaseActivity {
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_signup);
 
-        // Toolbar
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
@@ -44,19 +42,26 @@ public class SignupActivity extends BaseActivity {
             toolbar.setNavigationOnClickListener(v -> onBackPressed());
         }
 
-        // Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // UI references
         etUsernameSignup = findViewById(R.id.etUsernameSignup);
         etEmailSignup = findViewById(R.id.etEmailSignup);
         etPasswordSignup = findViewById(R.id.etPasswordSignup);
         btSignup = findViewById(R.id.btSignup);
+        btBackToLogin = findViewById(R.id.btBackToLogin);
         checkBox = findViewById(R.id.checkBox);
 
         btSignup.setOnClickListener(v -> registerUser());
+
+        Button btnGotoLogin = findViewById(R.id.btBackToLogin);
+        btnGotoLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        });
     }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
@@ -111,13 +116,15 @@ public class SignupActivity extends BaseActivity {
         user.put("email", email);
         user.put("online", true);
         user.put("lastActive", now);
+        user.put("lastMessage", "");
+        user.put("lastMessageTime", 0L);
         user.put("typingTo", "");
 
         db.collection("users").document(uid)
                 .set(user, SetOptions.merge())
                 .addOnSuccessListener(unused -> {
                     Toast.makeText(SignupActivity.this,
-                            "Account created! Verification email sent.", Toast.LENGTH_LONG).show();
+                            "Account created successfully!", Toast.LENGTH_LONG).show();
 
                     Intent intent = new Intent(SignupActivity.this, ChatListActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

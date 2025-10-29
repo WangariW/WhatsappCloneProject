@@ -7,9 +7,8 @@
     android:layout_marginHorizontal="12dp"
     android:layout_marginVertical="6dp"
     app:cardCornerRadius="14dp"
-    android:elevation="2dp"
+    android:elevation="3dp"
     app:cardBackgroundColor="@color/colorSurface"
-    android:clickable="true"
     android:foreground="?attr/selectableItemBackground">
 
     <RelativeLayout
@@ -28,7 +27,7 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true" />
 
-        <!-- Online Dot -->
+        <!-- Online Indicator -->
         <View
             android:id="@+id/onlineIndicator"
             android:layout_width="10dp"
@@ -60,7 +59,7 @@
             android:textSize="12sp"
             android:textColor="@color/colorAccent" />
 
-        <!-- Online/Offline status -->
+        <!-- Online / Last Seen -->
         <TextView
             android:id="@+id/tvOnlineStatus"
             android:layout_width="wrap_content"
@@ -71,7 +70,7 @@
             android:layout_marginTop="2dp"
             android:text="Offline"
             android:textSize="12sp"
-            android:textColor="@color/colorAccent" />
+            android:textColor="@color/colorTextSecondary" />
 
         <!-- Last message -->
         <TextView
@@ -88,6 +87,17 @@
             android:textColor="@color/colorTextSecondary"
             android:maxLines="1"
             android:ellipsize="end" />
-    </RelativeLayout>
 
+
+        <View
+            android:id="@+id/unreadDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@id/tvTimestamp"
+            android:layout_marginTop="6dp"
+            android:backgroundTint="@color/colorAccent"
+            android:background="@drawable/online_dot"
+            android:visibility="gone" />
+    </RelativeLayout>
 </androidx.cardview.widget.CardView>

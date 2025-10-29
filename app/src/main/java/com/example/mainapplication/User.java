@@ -6,6 +6,8 @@ public class User {
     private String email;
     private String lastMessage;
     private long lastMessageTime;
+    private boolean online;
+    private String typingTo;
 
     public User() {}
 
@@ -13,18 +15,30 @@ public class User {
         this.uid = uid;
         this.username = username;
         this.email = email;
+        this.lastMessage = "";
+        this.lastMessageTime = 0L;
+        this.online = true;
+        this.typingTo = "";
     }
 
     public String getUid() { return uid; }
+    public void setUid(String uid) { this.uid = uid; }
+
     public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
     public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
     public String getLastMessage() { return lastMessage; }
     public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
 
     public long getLastMessageTime() { return lastMessageTime; }
     public void setLastMessageTime(long lastMessageTime) { this.lastMessageTime = lastMessageTime; }
 
-    public void setUid(String uid) { this.uid = uid; }
-    public void setUsername(String username) { this.username = username; }
-    public void setEmail(String email) { this.email = email; }
+    public boolean isOnline() { return online; }
+    public void setOnline(boolean online) { this.online = online; }
+
+    public String getTypingTo() { return typingTo; }
+    public void setTypingTo(String typingTo) { this.typingTo = typingTo; }
 }

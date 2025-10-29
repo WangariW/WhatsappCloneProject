@@ -7,18 +7,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.*;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.*;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends BaseActivity {
 
@@ -33,17 +31,16 @@ public class LoginActivity extends BaseActivity {
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // Configure Google Sign In
+        // --- Google Sign-In setup ---
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // UI references
+        // --- UI elements ---
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
@@ -51,18 +48,14 @@ public class LoginActivity extends BaseActivity {
         Button btnPassreset = findViewById(R.id.btnPassreset);
         Button btnGoogleLogin = findViewById(R.id.btnGoogleLogin);
 
-        // Button actions
+        // --- Button listeners ---
         btnLogin.setOnClickListener(v -> loginUser());
-        btnSignup.setOnClickListener(v ->
-                startActivity(new Intent(LoginActivity.this, SignupActivity.class))
-        );
-        btnPassreset.setOnClickListener(v ->
-                Toast.makeText(this, "Forgot password", Toast.LENGTH_SHORT).show()
-        );
+        btnSignup.setOnClickListener(v -> startActivity(new Intent(LoginActivity.this, SignupActivity.class)));
+        btnPassreset.setOnClickListener(v -> Toast.makeText(this, "Forgot password feature coming soon!", Toast.LENGTH_SHORT).show());
         btnGoogleLogin.setOnClickListener(v -> signInWithGoogle());
     }
 
-    // --- Email / Password Login ---
+    // --- Normal email/password login ---
     private void loginUser() {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
@@ -76,19 +69,12 @@ public class LoginActivity extends BaseActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
-
-                        FirebaseFirestore.getInstance().collection("users")
-                                        .document(user.getUid())
-                                                .set(new User(user.getUid(), user.getEmail(), user.getDisplayName()))
-                                                        .addOnSuccessListener(aVoid ->{
-                                                            FirebaseFirestore.getInstance().collection("users")
-                                                                    .document(user.getUid())
-                                                                    .update("online", true, "lastActive", System.currentTimeMillis());
-                                                        });
-
-                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(LoginActivity.this, ChatListActivity.class));
-                        finish();
+                        if (user != null) {
+                            createOrUpdateUserDocument(user);
+                            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(LoginActivity.this, ChatListActivity.class));
+                            finish();
+                        }
                     } else {
                         Toast.makeText(this, "Login failed: " + task.getException().getMessage(),
                                 Toast.LENGTH_LONG).show();
@@ -96,6 +82,7 @@ public class LoginActivity extends BaseActivity {
                 });
     }
 
+    // --- Google sign-in flow ---
     private void signInWithGoogle() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -111,7 +98,7 @@ public class LoginActivity extends BaseActivity {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
-                Toast.makeText(this, "Google sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Google sign-in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -122,19 +109,38 @@ public class LoginActivity extends BaseActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
-                        Toast.makeText(this, "Welcome " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-
-                        // Store user info in Firestore if new
-                        FirebaseFirestore.getInstance().collection("users")
-                                .document(user.getUid())
-                                .set(new User(user.getUid(), user.getEmail(), user.getDisplayName()));
-
-                        // Go to chat list
-                        startActivity(new Intent(this, ChatListActivity.class));
-                        finish();
+                        if (user != null) {
+                            createOrUpdateUserDocument(user);
+                            Toast.makeText(this, "Welcome " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(this, ChatListActivity.class));
+                            finish();
+                        }
                     } else {
                         Toast.makeText(this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+
+    private void createOrUpdateUserDocument(FirebaseUser user) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("uid", user.getUid());
+        userMap.put("email", user.getEmail());
+
+
+        String displayName = user.getDisplayName();
+        String fallbackName = user.getEmail() != null ? user.getEmail().split("@")[0] : "User";
+        userMap.put("username", (displayName != null && !displayName.trim().isEmpty()) ? displayName : fallbackName);
+
+        userMap.put("online", true);
+        userMap.put("lastActive", System.currentTimeMillis());
+        userMap.put("lastMessage", "");
+        userMap.put("lastMessageTime", 0L);
+        userMap.put("typingTo", "");
+
+        // Merge instead of overwrite existing data
+        db.collection("users").document(user.getUid())
+                .set(userMap, SetOptions.merge());
     }
 }

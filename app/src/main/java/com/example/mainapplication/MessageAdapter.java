@@ -41,18 +41,15 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         Message message = messageList.get(position);
         boolean isSent = message.getSenderId().equals(currentUserId);
 
-        // Hide both first
         holder.sentLayout.setVisibility(View.GONE);
         holder.receivedLayout.setVisibility(View.GONE);
 
         if (isSent) {
             holder.sentLayout.setVisibility(View.VISIBLE);
 
-            // Text vs image
             if (message.getImageUrl() != null && !message.getImageUrl().isEmpty()) {
                 holder.tvSentMessage.setVisibility(View.GONE);
                 holder.imgSentMessage.setVisibility(View.VISIBLE);
-
                 Glide.with(holder.itemView.getContext())
                         .load(message.getImageUrl())
                         .into(holder.imgSentMessage);
@@ -62,16 +59,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                 holder.tvSentMessage.setText(message.getMessage());
             }
 
-            // Timestamp
             holder.tvSentTime.setText(formatTime(message.getTimestamp()));
 
-            // Read receipts
             if (message.isSeen()) {
                 holder.tvReadReceipt.setText("✓✓");
-                holder.tvReadReceipt.setTextColor(0xFF2196F3); // blue
+                holder.tvReadReceipt.setTextColor(0xFF2196F3);
             } else {
                 holder.tvReadReceipt.setText("✓");
-                holder.tvReadReceipt.setTextColor(0xFF757575); // gray
+                holder.tvReadReceipt.setTextColor(0xFF757575);
             }
 
         } else {
@@ -80,7 +75,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             if (message.getImageUrl() != null && !message.getImageUrl().isEmpty()) {
                 holder.tvReceivedMessage.setVisibility(View.GONE);
                 holder.imgReceivedMessage.setVisibility(View.VISIBLE);
-
                 Glide.with(holder.itemView.getContext())
                         .load(message.getImageUrl())
                         .into(holder.imgReceivedMessage);
@@ -109,12 +103,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             super(itemView);
             sentLayout = itemView.findViewById(R.id.sentLayout);
             receivedLayout = itemView.findViewById(R.id.receivedLayout);
-
             tvSentMessage = itemView.findViewById(R.id.tvSentMessage);
             tvSentTime = itemView.findViewById(R.id.tvSentTime);
             tvReadReceipt = itemView.findViewById(R.id.tvReadReceipt);
             imgSentMessage = itemView.findViewById(R.id.imgSentMessage);
-
             tvReceivedMessage = itemView.findViewById(R.id.tvReceivedMessage);
             tvReceivedTime = itemView.findViewById(R.id.tvReceivedTime);
             imgReceivedMessage = itemView.findViewById(R.id.imgReceivedMessage);

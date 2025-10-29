@@ -12,17 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
@@ -54,7 +50,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         User user = users.get(position);
         holder.tvUsername.setText(user.getUsername());
 
-        // Presence (Realtime DB)
         DatabaseReference userStatusRef = FirebaseDatabase.getInstance()
                 .getReference("presence")
                 .child(user.getUid());
@@ -65,38 +60,83 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                 if ("online".equals(status)) {
                     holder.tvOnlineStatus.setText("Online");
                     holder.tvOnlineStatus.setTextColor(context.getColor(R.color.green));
-                    animateDot(holder.onlineIndicator, true);
+                    holder.onlineIndicator.setVisibility(View.VISIBLE);
+                    animateDot(holder.onlineIndicator);
                 } else {
-                    holder.tvOnlineStatus.setText("Offline");
-                    holder.tvOnlineStatus.setTextColor(context.getColor(R.color.gray));
-                    animateDot(holder.onlineIndicator, false);
+                    holder.onlineIndicator.clearAnimation();
+                    holder.onlineIndicator.setVisibility(View.GONE);
+                    db.collection("users").document(user.getUid()).get().addOnSuccessListener(doc -> {
+                        Long lastActive = doc.getLong("lastActive");
+                        if (lastActive != null) {
+                            holder.tvOnlineStatus.setText(getLastSeenText(lastActive));
+                            holder.tvOnlineStatus.setTextColor(context.getColor(R.color.colorTextSecondary));
+                        }
+                    });
                 }
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
 
-        // Typing indicator (optional)
         db.collection("users").document(user.getUid())
                 .addSnapshotListener((snapshot, error) -> {
                     if (snapshot != null && snapshot.exists()) {
                         String typingTo = snapshot.getString("typingTo");
                         if (typingTo != null && typingTo.equals(currentUserId)) {
                             holder.tvLastMessage.setText("Typing...");
+                            holder.tvLastMessage.setTextColor(context.getColor(R.color.colorAccent));
                             holder.tvTimestamp.setText("");
                             return;
+                        } else {
+                            holder.tvLastMessage.setTextColor(context.getColor(R.color.colorTextSecondary));
                         }
                     }
-                    // Bind lastMessage + time from user document
-                    String lm = user.getLastMessage();
-                    holder.tvLastMessage.setText(lm == null || lm.isEmpty() ? "No messages yet" : lm);
+                });
 
-                    long t = user.getLastMessageTime();
-                    if (t > 0) {
-                        String time = new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                                .format(new Date(t));
-                        holder.tvTimestamp.setText(time);
-                    } else {
-                        holder.tvTimestamp.setText("");
+        db.collection("chats")
+                .whereIn("user1", Arrays.asList(currentUserId, user.getUid()))
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (var chatDoc : querySnapshot.getDocuments()) {
+                        String u1 = chatDoc.getString("user1");
+                        String u2 = chatDoc.getString("user2");
+                        if ((u1.equals(currentUserId) && u2.equals(user.getUid())) ||
+                                (u2.equals(currentUserId) && u1.equals(user.getUid()))) {
+
+                            String chatId = chatDoc.getId();
+
+                            db.collection("chats").document(chatId)
+                                    .collection("messages")
+                                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                                    .limit(1)
+                                    .addSnapshotListener((value, error) -> {
+                                        if (error != null || value == null || value.isEmpty()) return;
+                                        var msg = value.getDocuments().get(0);
+                                        String text = msg.getString("message");
+                                        String imageUrl = msg.getString("imageUrl");
+                                        Long time = msg.getLong("timestamp");
+                                        boolean seen = Boolean.TRUE.equals(msg.getBoolean("seen"));
+                                        String senderId = msg.getString("senderId");
+
+                                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                                            holder.tvLastMessage.setText("📷 Photo");
+                                        } else if (text != null && !text.isEmpty()) {
+                                            holder.tvLastMessage.setText(text);
+                                        } else {
+                                            holder.tvLastMessage.setText("No messages yet");
+                                        }
+
+                                        if (time != null) {
+                                            holder.tvTimestamp.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                                    .format(new Date(time)));
+                                        }
+
+                                        if (!seen && senderId != null && !senderId.equals(currentUserId)) {
+                                            holder.unreadDot.setVisibility(View.VISIBLE);
+                                        } else {
+                                            holder.unreadDot.setVisibility(View.GONE);
+                                        }
+                                    });
+                        }
                     }
                 });
 
@@ -111,7 +151,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView tvUsername, tvLastMessage, tvTimestamp, tvOnlineStatus;
         ImageView imgProfile;
-        View onlineIndicator;
+        View onlineIndicator, unreadDot;
 
         UserViewHolder(View itemView) {
             super(itemView);
@@ -121,20 +161,31 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             tvOnlineStatus = itemView.findViewById(R.id.tvOnlineStatus);
             imgProfile = itemView.findViewById(R.id.imgProfile);
             onlineIndicator = itemView.findViewById(R.id.onlineIndicator);
+            unreadDot = itemView.findViewById(R.id.unreadDot);
         }
     }
 
-    private void animateDot(View dot, boolean show) {
-        if (show) {
-            dot.setVisibility(View.VISIBLE);
-            AlphaAnimation anim = new AlphaAnimation(0.3f, 1.0f);
-            anim.setDuration(1000);
-            anim.setRepeatCount(AlphaAnimation.INFINITE);
-            anim.setRepeatMode(AlphaAnimation.REVERSE);
-            dot.startAnimation(anim);
-        } else {
-            dot.clearAnimation();
-            dot.setVisibility(View.GONE);
+    private void animateDot(View dot) {
+        AlphaAnimation anim = new AlphaAnimation(0.3f, 1.0f);
+        anim.setDuration(1000);
+        anim.setRepeatCount(AlphaAnimation.INFINITE);
+        anim.setRepeatMode(AlphaAnimation.REVERSE);
+        dot.startAnimation(anim);
+    }
+
+    private String getLastSeenText(long lastActive) {
+        long diff = System.currentTimeMillis() - lastActive;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
+
+        if (minutes < 1) return "Last seen just now";
+        else if (minutes < 60) return "Last seen " + minutes + " min ago";
+        else {
+            long hours = minutes / 60;
+            if (hours < 24) return "Last seen " + hours + " hr ago";
+            else {
+                long days = hours / 24;
+                return "Last seen " + days + " day" + (days > 1 ? "s" : "") + " ago";
+            }
         }
     }
 }

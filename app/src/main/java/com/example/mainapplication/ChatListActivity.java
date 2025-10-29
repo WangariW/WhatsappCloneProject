@@ -53,17 +53,23 @@ public class ChatListActivity extends BaseActivity {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
-        if (auth.getCurrentUser() != null) {
-            presenceRef = FirebaseDatabase.getInstance()
-                    .getReference("presence")
-                    .child(auth.getCurrentUser().getUid());
-            presenceRef.setValue("online");
-            presenceRef.onDisconnect().setValue("offline");
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
         }
 
+        // --- Presence handling
+        presenceRef = FirebaseDatabase.getInstance()
+                .getReference("presence")
+                .child(currentUser.getUid());
+        presenceRef.setValue("online");
+        presenceRef.onDisconnect().setValue("offline");
+
+        // --- Recycler setup
         userList = new ArrayList<>();
         userAdapter = new UserAdapter(userList, this, this::openChatRoom);
-
         rvChatList.setLayoutManager(new LinearLayoutManager(this));
         rvChatList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         rvChatList.setAdapter(userAdapter);
@@ -71,14 +77,8 @@ public class ChatListActivity extends BaseActivity {
         loadUsers();
     }
 
-    private void loadUsers() {
-        if (auth.getCurrentUser() == null) {
-            Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-            return;
-        }
 
+    private void loadUsers() {
         String currentUserId = auth.getCurrentUser().getUid();
 
         db.collection("users")
@@ -90,9 +90,8 @@ public class ChatListActivity extends BaseActivity {
                     }
 
                     userList.clear();
-
                     if (value != null) {
-                        for (DocumentSnapshot doc : value) {
+                        for (DocumentSnapshot doc : value.getDocuments()) {
                             User user = doc.toObject(User.class);
                             if (user != null && user.getUid() != null && !user.getUid().equals(currentUserId)) {
                                 userList.add(user);
@@ -104,43 +103,40 @@ public class ChatListActivity extends BaseActivity {
                 });
     }
 
-    private String getChatId(String sender, String receiver) {
-        return sender.compareTo(receiver) < 0
-                ? sender + "_" + receiver
-                : receiver + "_" + sender;
-    }
 
     private void openChatRoom(User user) {
+        if (user == null || user.getUid() == null) {
+            Toast.makeText(this, "User data missing", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Intent intent = new Intent(this, ChatRoomActivity.class);
         intent.putExtra("userId", user.getUid());
-        intent.putExtra("username", user.getUsername());
+
+        // Fallback logic for missing username
+        String safeName = (user.getUsername() != null && !user.getUsername().trim().isEmpty())
+                ? user.getUsername()
+                : (user.getEmail() != null ? user.getEmail() : "Chat User");
+
+        intent.putExtra("username", safeName);
         startActivity(intent);
     }
 
-    private void setUserOnlineStatus(boolean isOnline) {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .document(user.getUid())
-                    .update(
-                            "online", isOnline,
-                            "lastActive", System.currentTimeMillis()
-                    );
-        }
-    }
 
     private void performLogout() {
         isLoggingOut = true;
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
 
-        if (auth.getCurrentUser() != null) {
-            db.collection("users")
-                    .document(auth.getCurrentUser().getUid())
+            // update Firestore
+            db.collection("users").document(uid)
                     .update("online", false, "lastActive", System.currentTimeMillis());
 
+            // update Realtime DB presence
             FirebaseDatabase.getInstance()
                     .getReference("presence")
-                    .child(auth.getCurrentUser().getUid())
+                    .child(uid)
                     .setValue("offline");
         }
 
@@ -165,18 +161,21 @@ public class ChatListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("online");
+        if (!isLoggingOut && presenceRef != null)
+            presenceRef.setValue("online");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("offline");
+        if (!isLoggingOut && presenceRef != null)
+            presenceRef.setValue("offline");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("offline");
+        if (!isLoggingOut && presenceRef != null)
+            presenceRef.setValue("offline");
     }
 }
