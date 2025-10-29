@@ -1,15 +1,12 @@
 package com.example.mainapplication;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -26,8 +23,7 @@ import java.util.Objects;
 public class SignupActivity extends BaseActivity {
 
     private EditText etUsernameSignup, etEmailSignup, etPasswordSignup;
-    private ImageView imgProfile;
-    private Button btnUploadPic, btSignup;
+    private Button btSignup;
     private CheckBox checkBox;
 
     private FirebaseAuth mAuth;
@@ -39,40 +35,29 @@ public class SignupActivity extends BaseActivity {
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_signup);
 
-        // ✅ Toolbar setup
+        // Toolbar
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
             Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Create Account");
-            // Handles back arrow click
             toolbar.setNavigationOnClickListener(v -> onBackPressed());
         }
 
-        // 🔥 Firebase setup
+        // Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // 🎨 UI references
+        // UI references
         etUsernameSignup = findViewById(R.id.etUsernameSignup);
         etEmailSignup = findViewById(R.id.etEmailSignup);
         etPasswordSignup = findViewById(R.id.etPasswordSignup);
-        imgProfile = findViewById(R.id.imgProfile);
-        btnUploadPic = findViewById(R.id.btnUploadPic);
         btSignup = findViewById(R.id.btSignup);
         checkBox = findViewById(R.id.checkBox);
 
-        // Disable upload until billing/storage added
-        if (btnUploadPic != null) {
-            btnUploadPic.setEnabled(false);
-            btnUploadPic.setText("Upload disabled (no billing)");
-        }
-
-        // 🪄 Signup button click
         btSignup.setOnClickListener(v -> registerUser());
     }
 
-    // Handles toolbar back button (if pressed via system)
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -82,7 +67,6 @@ public class SignupActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // 🔐 Register new user
     private void registerUser() {
         String username = etUsernameSignup.getText().toString().trim();
         String email = etEmailSignup.getText().toString().trim();
@@ -112,22 +96,19 @@ public class SignupActivity extends BaseActivity {
                     }
 
                     firebaseUser.sendEmailVerification();
-
-                    saveUserToFirestore(firebaseUser.getUid(), username, email, "default");
+                    saveUserToFirestore(firebaseUser.getUid(), username, email);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Signup failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-    // 🧩 Save user record in Firestore
-    private void saveUserToFirestore(String uid, String username, String email, String imageUrl) {
+    private void saveUserToFirestore(String uid, String username, String email) {
         long now = System.currentTimeMillis();
 
         Map<String, Object> user = new HashMap<>();
         user.put("uid", uid);
         user.put("username", username);
         user.put("email", email);
-        user.put("profileImage", imageUrl);
         user.put("online", true);
         user.put("lastActive", now);
         user.put("typingTo", "");

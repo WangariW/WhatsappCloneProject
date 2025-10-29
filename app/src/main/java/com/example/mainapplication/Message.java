@@ -7,6 +7,7 @@ public class Message {
     private String message;
     private long timestamp;
     private boolean seen;
+    private String imageUrl;
 
     public Message() {}
 
@@ -15,7 +16,7 @@ public class Message {
         this.receiverId = receiverId;
         this.message = message;
         this.timestamp = timestamp;
-        this.seen = false; // default
+        this.seen = false;
     }
 
     // Getters
@@ -25,6 +26,7 @@ public class Message {
     public String getMessage() { return message; }
     public long getTimestamp() { return timestamp; }
     public boolean isSeen() { return seen; }
+    public String getImageUrl() { return imageUrl; }
 
     // Setters
     public void setId(String id) { this.id = id; }
@@ -33,4 +35,5 @@ public class Message {
     public void setMessage(String message) { this.message = message; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
     public void setSeen(boolean seen) { this.seen = seen; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

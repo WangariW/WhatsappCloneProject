@@ -8,22 +8,28 @@
     android:background="@color/colorBackground"
     tools:context=".ChatListActivity">
 
-    <!-- Top bar -->
+    <!-- Top App Bar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
+        android:backgroundTint="@color/colorPrimary"
         app:title="Chats"
+        app:titleCentered="true"
         app:titleTextColor="@android:color/white"
-        app:menu="@menu/menu_chat_list" />
+        app:navigationIconTint="@android:color/white"
+        app:menu="@menu/menu_chat_list"
+        android:elevation="4dp" />
 
-    <!-- RecyclerView -->
+    <!-- RecyclerView for chat list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvChatList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="?attr/actionBarSize"
         android:clipToPadding="false"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:layout_marginBottom="8dp"
+        tools:listitem="@layout/item_chat_user" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

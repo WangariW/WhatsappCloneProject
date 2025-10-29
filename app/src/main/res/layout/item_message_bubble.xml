@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp">
+
+    <!-- Sent message (right side) -->
+    <LinearLayout
+        android:id="@+id/sentLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_message_sent"
+            android:padding="10dp">
+
+            <!-- Text message -->
+            <TextView
+                android:id="@+id/tvSentMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:lineSpacingExtra="2dp"
+                android:maxWidth="260dp"
+                android:visibility="gone" />
+
+            <!-- Image message -->
+            <ImageView
+                android:id="@+id/imgSentMessage"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:visibility="gone" />
+
+            <!-- Time and read receipt -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end|center_vertical"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tvSentTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#E0E0E0"
+                    android:textSize="10sp"
+                    android:text="10:45 PM" />
+
+                <TextView
+                    android:id="@+id/tvReadReceipt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="✓✓"
+                    android:textColor="#E0E0E0"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Received message (left side) -->
+    <LinearLayout
+        android:id="@+id/receivedLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_message_received"
+            android:padding="10dp">
+
+            <!-- Text message -->
+            <TextView
+                android:id="@+id/tvReceivedMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:lineSpacingExtra="2dp"
+                android:maxWidth="260dp"
+                android:visibility="gone" />
+
+            <!-- Image message -->
+            <ImageView
+                android:id="@+id/imgReceivedMessage"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:visibility="gone" />
+
+            <!-- Timestamp -->
+            <TextView
+                android:id="@+id/tvReceivedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#757575"
+                android:textSize="10sp"
+                android:layout_marginTop="4dp"
+                android:gravity="end"
+                android:text="10:46 PM" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

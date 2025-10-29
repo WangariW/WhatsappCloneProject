@@ -8,7 +8,6 @@
     android:background="@color/colorBackground"
     tools:context=".SignupActivity">
 
-    <!-- ✅ Toolbar added -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,7 +18,6 @@
         app:navigationIcon="@drawable/ic_arrow_back_24"
         app:navigationContentDescription="Back" />
 
-    <!-- Existing content scrollable -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,36 +30,15 @@
             android:padding="24dp"
             android:gravity="center_horizontal">
 
-            <!-- Title -->
             <TextView
                 android:id="@+id/tvSignupTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Create Account"
-                android:textSize="30sp"
-                android:textStyle="bold"
+                android:layout_marginBottom="20dp"
+                android:text="BanterBox"
                 android:textColor="@color/colorPrimary"
-                android:layout_marginBottom="20dp" />
-
-            <!-- Profile image -->
-            <ImageView
-                android:id="@+id/imgProfile"
-                android:layout_width="90dp"
-                android:layout_height="90dp"
-                android:src="@drawable/ic_person"
-                android:background="@drawable/circle_bg"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp" />
-
-            <Button
-                android:id="@+id/btnUploadPic"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Upload Photo"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/colorAccent"
-                android:layout_marginBottom="24dp" />
+                android:textSize="30sp"
+                android:textStyle="bold" />
 
             <!-- Username -->
             <EditText
@@ -101,7 +78,7 @@
                 android:textColorHint="@color/colorTextSecondary"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Terms & conditions -->
+            <!-- Terms & Conditions -->
             <CheckBox
                 android:id="@+id/checkBox"
                 android:layout_width="match_parent"
@@ -147,5 +124,4 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>

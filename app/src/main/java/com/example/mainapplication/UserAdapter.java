@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -11,8 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,58 +54,28 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         User user = users.get(position);
         holder.tvUsername.setText(user.getUsername());
 
-        db.collection("users").document(user.getUid())
-                .addSnapshotListener((snapshot, e) -> {
-                    if (snapshot != null && snapshot.exists()) {
-                        Boolean online = snapshot.getBoolean("online");
-                        Long lastActive = snapshot.getLong("lastActive");
+        // Presence (Realtime DB)
+        DatabaseReference userStatusRef = FirebaseDatabase.getInstance()
+                .getReference("presence")
+                .child(user.getUid());
 
-                        if (online != null && online) {
-                            holder.tvOnlineStatus.setText("Online");
-                            holder.tvOnlineStatus.setTextColor(context.getColor(R.color.green));
-                        } else if (lastActive != null) {
-                            holder.tvOnlineStatus.setText("Last seen " + getTimeAgo(lastActive));
-                            holder.tvOnlineStatus.setTextColor(context.getColor(R.color.gray));
-                        } else {
-                            holder.tvOnlineStatus.setText("Offline");
-                            holder.tvOnlineStatus.setTextColor(context.getColor(R.color.gray));
-                        }
-                    }
-                });
+        userStatusRef.addValueEventListener(new ValueEventListener() {
+            @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String status = snapshot.getValue(String.class);
+                if ("online".equals(status)) {
+                    holder.tvOnlineStatus.setText("Online");
+                    holder.tvOnlineStatus.setTextColor(context.getColor(R.color.green));
+                    animateDot(holder.onlineIndicator, true);
+                } else {
+                    holder.tvOnlineStatus.setText("Offline");
+                    holder.tvOnlineStatus.setTextColor(context.getColor(R.color.gray));
+                    animateDot(holder.onlineIndicator, false);
+                }
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
 
-        holder.tvLastMessage.setText("Loading...");
-        holder.tvTimestamp.setText("");
-
-        // --- Fetch the latest message between current user and this user ---
-        String chatId = getChatId(currentUserId, user.getUid());
-        db.collection("chats")
-                .document(chatId)
-                .collection("messages")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null || value.isEmpty()) {
-                        holder.tvLastMessage.setText("No messages yet");
-                        holder.tvTimestamp.setText("");
-                        return;
-                    }
-
-                    Message lastMessage = value.getDocuments().get(0).toObject(Message.class);
-                    if (lastMessage == null) return;
-
-                    String prefix = lastMessage.getSenderId().equals(currentUserId)
-                            ? "You: "
-                            : "";
-
-                    holder.tvLastMessage.setText(prefix + lastMessage.getMessage());
-
-                    // --- Format and display timestamp ---
-                    String time = new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                            .format(new Date(lastMessage.getTimestamp()));
-                    holder.tvTimestamp.setText(time);
-                });
-
-        // --- Real-time typing indicator ---
+        // Typing indicator (optional)
         db.collection("users").document(user.getUid())
                 .addSnapshotListener((snapshot, error) -> {
                     if (snapshot != null && snapshot.exists()) {
@@ -108,11 +83,23 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                         if (typingTo != null && typingTo.equals(currentUserId)) {
                             holder.tvLastMessage.setText("Typing...");
                             holder.tvTimestamp.setText("");
+                            return;
                         }
+                    }
+                    // Bind lastMessage + time from user document
+                    String lm = user.getLastMessage();
+                    holder.tvLastMessage.setText(lm == null || lm.isEmpty() ? "No messages yet" : lm);
+
+                    long t = user.getLastMessageTime();
+                    if (t > 0) {
+                        String time = new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                .format(new Date(t));
+                        holder.tvTimestamp.setText(time);
+                    } else {
+                        holder.tvTimestamp.setText("");
                     }
                 });
 
-        // --- On user click ---
         holder.itemView.setOnClickListener(v -> listener.onUserClick(user));
     }
 
@@ -124,6 +111,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView tvUsername, tvLastMessage, tvTimestamp, tvOnlineStatus;
         ImageView imgProfile;
+        View onlineIndicator;
 
         UserViewHolder(View itemView) {
             super(itemView);
@@ -132,22 +120,21 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             tvTimestamp = itemView.findViewById(R.id.tvTimestamp);
             tvOnlineStatus = itemView.findViewById(R.id.tvOnlineStatus);
             imgProfile = itemView.findViewById(R.id.imgProfile);
+            onlineIndicator = itemView.findViewById(R.id.onlineIndicator);
         }
     }
 
-    private String getChatId(String sender, String receiver) {
-        return sender.compareTo(receiver) < 0
-                ? sender + "_" + receiver
-                : receiver + "_" + sender;
-    }
-
-    private String getTimeAgo(long timestamp) {
-        long diff = System.currentTimeMillis() - timestamp;
-        long mins = diff / 60000;
-        if (mins < 1) return "just now";
-        if (mins < 60) return mins + " min ago";
-        long hrs = mins / 60;
-        if (hrs < 24) return hrs + " h ago";
-        return (hrs / 24) + " d ago";
+    private void animateDot(View dot, boolean show) {
+        if (show) {
+            dot.setVisibility(View.VISIBLE);
+            AlphaAnimation anim = new AlphaAnimation(0.3f, 1.0f);
+            anim.setDuration(1000);
+            anim.setRepeatCount(AlphaAnimation.INFINITE);
+            anim.setRepeatMode(AlphaAnimation.REVERSE);
+            dot.startAnimation(anim);
+        } else {
+            dot.clearAnimation();
+            dot.setVisibility(View.GONE);
+        }
     }
 }

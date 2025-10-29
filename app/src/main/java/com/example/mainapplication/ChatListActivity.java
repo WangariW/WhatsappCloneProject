@@ -1,7 +1,5 @@
 package com.example.mainapplication;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -16,7 +14,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 
-
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -31,13 +30,14 @@ public class ChatListActivity extends BaseActivity {
     private FirebaseAuth auth;
     private ArrayList<User> userList;
     private UserAdapter userAdapter;
+    private DatabaseReference presenceRef;
+    private boolean isLoggingOut = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         com.google.firebase.FirebaseApp.initializeApp(this);
-
         setContentView(R.layout.activity_chat_list);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -53,8 +53,16 @@ public class ChatListActivity extends BaseActivity {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
+        if (auth.getCurrentUser() != null) {
+            presenceRef = FirebaseDatabase.getInstance()
+                    .getReference("presence")
+                    .child(auth.getCurrentUser().getUid());
+            presenceRef.setValue("online");
+            presenceRef.onDisconnect().setValue("offline");
+        }
+
         userList = new ArrayList<>();
-        userAdapter = new UserAdapter(userList, this, user -> openChatRoom(user));
+        userAdapter = new UserAdapter(userList, this, this::openChatRoom);
 
         rvChatList.setLayoutManager(new LinearLayoutManager(this));
         rvChatList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
@@ -74,6 +82,7 @@ public class ChatListActivity extends BaseActivity {
         String currentUserId = auth.getCurrentUser().getUid();
 
         db.collection("users")
+                .orderBy("lastMessageTime", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Toast.makeText(this, "Listen failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
@@ -87,32 +96,11 @@ public class ChatListActivity extends BaseActivity {
                             User user = doc.toObject(User.class);
                             if (user != null && user.getUid() != null && !user.getUid().equals(currentUserId)) {
                                 userList.add(user);
-                                fetchLastMessage(user);
                             }
                         }
                     }
 
                     userAdapter.notifyDataSetChanged();
-                });
-    }
-
-    private void fetchLastMessage(User user) {
-        String chatId = getChatId(auth.getCurrentUser().getUid(), user.getUid());
-
-        db.collection("chats")
-                .document(chatId)
-                .collection("messages")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(1)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null || value.isEmpty()) return;
-
-                    Message lastMsg = value.getDocuments().get(0).toObject(Message.class);
-                    if (lastMsg != null) {
-                        user.setLastMessage(lastMsg.getMessage());
-                        user.setLastMessageTime(lastMsg.getTimestamp());
-                        userAdapter.notifyDataSetChanged();
-                    }
                 });
     }
 
@@ -138,24 +126,26 @@ public class ChatListActivity extends BaseActivity {
                     .update(
                             "online", isOnline,
                             "lastActive", System.currentTimeMillis()
-                    )
-                    .addOnFailureListener(e ->
-                            System.out.println("Presence update failed: " + e.getMessage()));
+                    );
         }
     }
 
     private void performLogout() {
-        // mark offline (best-effort)
+        isLoggingOut = true;
+
         if (auth.getCurrentUser() != null) {
             db.collection("users")
                     .document(auth.getCurrentUser().getUid())
                     .update("online", false, "lastActive", System.currentTimeMillis());
+
+            FirebaseDatabase.getInstance()
+                    .getReference("presence")
+                    .child(auth.getCurrentUser().getUid())
+                    .setValue("offline");
         }
 
-        // Firebase sign out
-        FirebaseAuth.getInstance().signOut();
+        auth.signOut();
 
-        // Google sign out (safe if not used)
         GoogleSignInClient gsc = GoogleSignIn.getClient(
                 this,
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -163,30 +153,30 @@ public class ChatListActivity extends BaseActivity {
                         .requestEmail()
                         .build()
         );
-        gsc.signOut();
 
-        // Go back to login page
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        gsc.signOut().addOnCompleteListener(task -> {
+            Intent intent = new Intent(ChatListActivity.this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        setUserOnlineStatus(true);
+        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("online");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        setUserOnlineStatus(false);
+        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("offline");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        setUserOnlineStatus(false);
+        if (!isLoggingOut && presenceRef != null) presenceRef.setValue("offline");
     }
 }

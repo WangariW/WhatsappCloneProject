@@ -9,10 +9,22 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_message_sent"
+        android:orientation="vertical"
         android:padding="10dp"
-        android:orientation="vertical">
+        android:background="@drawable/bg_message_sent">
 
+        <!-- Image message (hidden unless used) -->
+        <ImageView
+            android:id="@+id/messageImage"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginBottom="6dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:background="@drawable/message_image_bg"
+            android:visibility="gone" />
+
+        <!-- Text message -->
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
@@ -23,11 +35,13 @@
             android:maxWidth="260dp"
             android:text="Hey, this is your message bubble!" />
 
+        <!-- Timestamp and read receipt -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end|center_vertical">
+            android:gravity="end|center_vertical"
+            android:layout_marginTop="4dp">
 
             <TextView
                 android:id="@+id/tvTimestamp"
